@@ -1,6 +1,6 @@
 #!/bin/bash
-# Build Debian *source* packages (.dsc + .orig.tar.gz + .debian.tar.xz) for each
-# suite, for upload to an apt repository (e.g. deb.griffo.io). The upstream
+# Build the Debian *source* package (.dsc + .orig.tar.gz + .debian.tar.xz), one
+# for every suite, for upload to an apt repository (e.g. deb.griffo.io). The upstream
 # Neovim source archive is used as the .orig tarball; the actual shipped payload
 # is the prebuilt release binary, fetched by debian/rules at build time.
 #
@@ -23,6 +23,20 @@ BUILD_DIR="${PACKAGE_NAME}-${VERSION}"
 # GitHub's archive of tag "v<VERSION>" extracts to "neovim-<VERSION>/", which is
 # exactly the "<source>-<version>/" layout dpkg-source expects, so it can be
 # used as the .orig tarball as-is.
+# A rebuild of an upstream version already released here (a +N build bump)
+# must ship the very same orig tarball: the pool holds one per upstream
+# version and reprepro refuses a different one, and nothing guarantees the
+# archive download is byte-identical next time. Reuse the earlier release's copy.
+if [ ! -f "$ORIG_TARBALL" ]; then
+    for ((b = BUILD - 1; b >= 1; b--)); do
+        if wget -q "https://github.com/dariogriffo/neovim-debian/releases/download/${VERSION}%2B${b}/${ORIG_TARBALL}" -O "$ORIG_TARBALL"; then
+            echo "  Reusing $ORIG_TARBALL from release ${VERSION}+${b}"
+            break
+        fi
+        rm -f "$ORIG_TARBALL"
+    done
+fi
+
 if [ ! -f "$ORIG_TARBALL" ]; then
     echo "Downloading upstream source for v${VERSION}..."
     wget -q "https://github.com/neovim/neovim/archive/refs/tags/v${VERSION}.tar.gz" \
@@ -33,16 +47,15 @@ else
 fi
 
 build_source_package() {
-    local dist="$1"
-    local FULL_VERSION="${VERSION}-${BUILD}~${dist}"
-    echo "  Building source package for ${dist} (${FULL_VERSION})..."
+    local FULL_VERSION="${VERSION}-${BUILD}~griffo"
+    echo "  Building source package ${FULL_VERSION}..."
 
     rm -rf "$BUILD_DIR"
     tar -xf "$ORIG_TARBALL"
     cp -r debian "$BUILD_DIR/"
 
     cat > "$BUILD_DIR/debian/changelog" << EOF
-neovim (${FULL_VERSION}) ${dist}; urgency=medium
+neovim (${FULL_VERSION}) stable; urgency=medium
 
   * New upstream release ${VERSION}.
 
@@ -54,11 +67,9 @@ EOF
 }
 
 echo ""
-echo "Building Debian source packages..."
-for dist in "bookworm" "trixie" "forky" "sid"; do
-    build_source_package "$dist"
-done
+# One source package for every suite, as with the binaries (see build_neovim_debian.sh).
+build_source_package
 
 echo ""
-echo "Source packages created:"
+echo "Source package created:"
 ls -la "${PACKAGE_NAME}_"*.dsc "${PACKAGE_NAME}_"*.orig.tar.gz "${PACKAGE_NAME}_"*.debian.tar.xz 2>/dev/null || true

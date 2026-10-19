@@ -1,11 +1,14 @@
 #!/bin/bash
-# Build the neovim binary packages (.deb) for each Debian suite, using a
-# per-suite Docker image so shared-library dependencies resolve correctly.
+# Build the neovim binary packages (.deb), one set for every suite. The build
+# runs on bookworm, the oldest Debian suite served, so the dependencies
+# dh_shlibdeps resolves (libc6, libgcc-s1) hold on every newer suite too; only
+# the old ~<suite> version suffix ever differed between the per-suite builds.
+# The fixed ~griffo keeps it below the distro's own build of the same version.
 #
-# Produces, per suite, in ./out :
-#   neovim_<ver>-<build>~<dist>_amd64.deb
-#   neovim-unstripped_<ver>-<build>~<dist>_amd64.deb
-#   neovim-runtime_<ver>-<build>~<dist>_all.deb
+# Produces, in ./out :
+#   neovim_<ver>-<build>~griffo_amd64.deb
+#   neovim-unstripped_<ver>-<build>~griffo_amd64.deb
+#   neovim-runtime_<ver>-<build>~griffo_all.deb
 #
 # Usage: ./build_neovim_debian.sh <neovim_version> <build_version>
 set -euo pipefail
@@ -18,31 +21,26 @@ if [ -z "$VERSION" ] || [ -z "$BUILD" ]; then
     exit 1
 fi
 
-DISTS=("bookworm" "trixie" "forky" "sid")
+FULL_VERSION="${VERSION}-${BUILD}~griffo"
 
 mkdir -p out
 
-for dist in "${DISTS[@]}"; do
-    FULL_VERSION="${VERSION}-${BUILD}~${dist}"
-    echo "==> Building neovim ${FULL_VERSION} (${dist})"
+echo "==> Building neovim ${FULL_VERSION}"
 
-    # Generate the distribution-specific changelog (overwrites the placeholder).
-    cat > debian/changelog << EOF
-neovim (${FULL_VERSION}) ${dist}; urgency=medium
+# Generate the changelog (overwrites the placeholder).
+cat > debian/changelog << EOF2
+neovim (${FULL_VERSION}) stable; urgency=medium
 
   * New upstream release ${VERSION}.
 
  -- Dario Griffo <dariogriffo@gmail.com>  $(date -R)
-EOF
+EOF2
 
-    docker build -t "neovim-build-${dist}" \
-        --build-arg "DIST=${dist}" \
-        -f Dockerfile .
+docker build -t "neovim-build" -f Dockerfile .
 
-    cid="$(docker create "neovim-build-${dist}")"
-    docker cp "${cid}:/out/." ./out/
-    docker rm "${cid}" > /dev/null
-done
+cid="$(docker create "neovim-build")"
+docker cp "${cid}:/out/." ./out/
+docker rm "${cid}" > /dev/null
 
 echo ""
 echo "Built packages:"

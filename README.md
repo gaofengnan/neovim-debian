@@ -1,23 +1,20 @@
-![GitHub Release](https://img.shields.io/github/v/release/dariogriffo/neovim-debian)
-![GitHub Release Date](https://img.shields.io/github/release-date/dariogriffo/neovim-debian)
+![GitHub Release](https://img.shields.io/github/v/release/gaofengnan/neovim-debian)
+![GitHub Release Date](https://img.shields.io/github/release-date/gaofengnan/neovim-debian)
 
 # Neovim for Debian
 
 This repository contains build scripts that produce **unofficial** Debian
 packages (`.deb`) of the latest [Neovim](https://github.com/neovim/neovim)
-release, hosted at [deb.griffo.io](https://deb.griffo.io).
+release, hosted at [deb.gaofn.xyz](https://deb.gaofn.xyz).
+This is a fork of [dariogriffo/neovim-debian](https://github.com/dariogriffo/neovim-debian) (MIT); the original packaging is by Dario Griffo.
 
 The packages repackage the **official upstream prebuilt binary**
 (`nvim-linux-x86_64.tar.gz`) — nothing is rebuilt from source — so Debian
 **stable** users can get the newest Neovim the day it ships upstream, instead of
 waiting for the next Debian release.
 
-Currently supported Debian suites (amd64):
-
-- Bookworm
-- Trixie
-- Forky
-- Sid
+Currently served at deb.gaofn.xyz: Debian **Trixie** (amd64). The package itself is a
+prebuilt upstream binary, so it is not tied to one suite, but only Trixie is published there.
 
 ## Packages
 
@@ -32,9 +29,9 @@ whichever version is newer — normally the one from this repository, since it
 tracks upstream releases directly. To make that explicit, pin the repo:
 
 ```sh
-sudo tee /etc/apt/preferences.d/deb.griffo.io-neovim > /dev/null << 'EOF'
+sudo tee /etc/apt/preferences.d/deb.gaofn.xyz-neovim > /dev/null << 'EOF'
 Package: neovim neovim-runtime neovim-unstripped
-Pin: origin deb.griffo.io
+Pin: origin deb.gaofn.xyz
 Pin-Priority: 1001
 EOF
 ```
@@ -53,8 +50,8 @@ the command is still `nvim` and your configuration is untouched.
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://deb.griffo.io/EA0F721D231FDD3A0A17B9AC7808B4DD62C41256.asc | sudo gpg --dearmor --yes -o /etc/apt/keyrings/deb.griffo.io.gpg
-echo "deb [signed-by=/etc/apt/keyrings/deb.griffo.io.gpg] https://deb.griffo.io/apt $(lsb_release -sc 2>/dev/null) main" | sudo tee /etc/apt/sources.list.d/deb.griffo.io.list
+sudo curl -fsSL https://deb.gaofn.xyz/deb.gaofn.xyz.gpg -o /etc/apt/keyrings/deb.gaofn.xyz.gpg
+sudo curl -fsSL https://deb.gaofn.xyz/deb.gaofn.xyz.sources -o /etc/apt/sources.list.d/deb.gaofn.xyz.sources
 sudo apt update
 sudo apt install neovim
 ```
@@ -69,7 +66,7 @@ sudo update-alternatives --config nvim
 ### Manual installation
 
 1. Download the `.deb` files for your Debian suite from the
-   [Releases](https://github.com/dariogriffo/neovim-debian/releases) page
+   [Releases](https://github.com/gaofengnan/neovim-debian/releases) page
    (`neovim-runtime` + `neovim`).
 2. Install them:
 

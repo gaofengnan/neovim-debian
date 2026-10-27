@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build the Debian *source* package (.dsc + .orig.tar.gz + .debian.tar.xz), one
-# for every suite, for upload to an apt repository (e.g. deb.griffo.io). The upstream
+# for every suite, for upload to an apt repository (e.g. deb.gaofn.xyz). The upstream
 # Neovim source archive is used as the .orig tarball; the actual shipped payload
 # is the prebuilt release binary, fetched by debian/rules at build time.
 #
@@ -29,7 +29,7 @@ BUILD_DIR="${PACKAGE_NAME}-${VERSION}"
 # archive download is byte-identical next time. Reuse the earlier release's copy.
 if [ ! -f "$ORIG_TARBALL" ]; then
     for ((b = BUILD - 1; b >= 1; b--)); do
-        if wget -q "https://github.com/dariogriffo/neovim-debian/releases/download/${VERSION}%2B${b}/${ORIG_TARBALL}" -O "$ORIG_TARBALL"; then
+        if wget -q "https://github.com/gaofengnan/neovim-debian/releases/download/${VERSION}%2B${b}/${ORIG_TARBALL}" -O "$ORIG_TARBALL"; then
             echo "  Reusing $ORIG_TARBALL from release ${VERSION}+${b}"
             break
         fi
@@ -47,7 +47,7 @@ else
 fi
 
 build_source_package() {
-    local FULL_VERSION="${VERSION}-${BUILD}~griffo"
+    local FULL_VERSION="${VERSION}-${BUILD}~gaofn"
     echo "  Building source package ${FULL_VERSION}..."
 
     rm -rf "$BUILD_DIR"
@@ -59,7 +59,7 @@ neovim (${FULL_VERSION}) stable; urgency=medium
 
   * New upstream release ${VERSION}.
 
- -- Dario Griffo <dariogriffo@gmail.com>  $(date -R)
+ -- Fengnan Gao <gao.fengnan@gmail.com>  $(date -R)
 EOF
 
     dpkg-source -b "$BUILD_DIR"
